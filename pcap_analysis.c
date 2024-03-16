@@ -162,11 +162,17 @@ int main() {
             dim5->Protocol);
 
     // write dat (binary)
+    // htonl: host to net long int 32 bytes
+    dim5->SrcIP = htonl(dim5->SrcIP);
+    dim5->DstIP = htonl(dim5->DstIP);
     fwrite(dim5, sizeof(Dim5), 1, outB);
 
     // write dat test
     fseek(outB, -1 * sizeof(Dim5), SEEK_CUR);
     fread(dim5_tmp, sizeof(Dim5), 1, outB);
+    // ntohl: net to host long int 32 bytes
+    dim5_tmp->SrcIP = ntohl(dim5_tmp->SrcIP);
+    dim5_tmp->DstIP = ntohl(dim5_tmp->DstIP);
     fprintf(output, "======== convert TEST ========\n");
     fprintf(output, "%ld    %u     %u      %d     %d      %d\n", index,
             (unsigned int)dim5_tmp->SrcIP, (unsigned int)dim5_tmp->DstIP,
