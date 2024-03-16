@@ -102,6 +102,7 @@ int main() {
     memset(ptk_header, 0, sizeof(struct pcap_pkthdr));
     memset(dim5, 0, sizeof(struct Dim5));
     memset(dim5_tmp, 0, sizeof(struct Dim5));
+    ++index;
 
     // read packet header 16 bytes
     if (fread(ptk_header, 16, 1, pFile) != 1) {
