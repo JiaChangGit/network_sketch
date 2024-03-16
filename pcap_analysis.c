@@ -7,16 +7,16 @@
 char tempSrcIp[256];
 char tempDstIp[256];
 
-// pcap header
-struct pcap_file_header {
-  u_int32_t magic;         /* 0xa1b2c3d4 */
-  u_int16_t version_major; /* magjor Version 2 */
-  u_int16_t version_minor; /* magjor Version 4 */
-  int32_t thiszone;        /* gmt to local correction */
-  u_int32_t sigfigs;       /* accuracy of timestamps */
-  u_int32_t snaplen;       /* max length saved portion of each pkt */
-  u_int32_t linktype;      /* data link type (LINKTYPE_*) */
-};
+// // pcap header
+// struct pcap_file_header {
+//   u_int32_t magic;         /* 0xa1b2c3d4 */
+//   u_int16_t version_major; /* magjor Version 2 */
+//   u_int16_t version_minor; /* magjor Version 4 */
+//   int32_t thiszone;        /* gmt to local correction */
+//   u_int32_t sigfigs;       /* accuracy of timestamps */
+//   u_int32_t snaplen;       /* max length saved portion of each pkt */
+//   u_int32_t linktype;      /* data link type (LINKTYPE_*) */
+// };
 
 struct time_val {
   int tv_sec;
@@ -68,7 +68,7 @@ int main() {
   Dim5 *dim5_tmp = NULL;
 
   // init memory
-  ptk_header = (struct pcap_pkthdr *)malloc(256);
+  ptk_header = (pcap_pkthdr *)malloc(256);
   ip_header = (IPHeader_t *)malloc(sizeof(IPHeader_t));
   tcpudp_header = (TCPUDPHeader_t *)malloc(sizeof(TCPUDPHeader_t));
   dim5 = (Dim5 *)malloc(sizeof(Dim5));
@@ -76,22 +76,24 @@ int main() {
 
   // read file
   FILE *pFile = fopen("./traces/test.pcap", "r");
+  // FILE *pFile = fopen("./traces/trace1.pcap", "r");
   if (pFile == NULL) {
     fprintf(stderr, "[ERROR] Can not open PCAP file!!\n");
     exit(-1);
   }
-  FILE *output = fopen("./pcap_result.txt", "w+");
+  FILE *output = fopen("./INFO/pcap_result.txt", "w+");
   if (output == NULL) {
     fprintf(stderr, "[ERROR] Can not write file!!\n");
     exit(-1);
   }
-  FILE *outB = fopen("./binary.dat", "w+");
+  FILE *outB = fopen("./INFO/binary.dat", "w+");
   if (outB == NULL) {
     fprintf(stderr, "[ERROR] Can not write dat!!\n");
     exit(-1);
   }
   fprintf(output,
-          "sip               dip           sport     dport      protocol\n");
+          "index    sip               dip           sport     dport      "
+          "protocol\n");
 
   long int pkt_offset = 24;  // 用來檔案偏移, pcap header 24 bytes
   size_t index = 0;
@@ -99,9 +101,9 @@ int main() {
   while (1) {
     // 移動pfile檔案指針位置，跳過pcap header
     fseek(pFile, pkt_offset, SEEK_SET);
-    memset(ptk_header, 0, sizeof(struct pcap_pkthdr));
-    memset(dim5, 0, sizeof(struct Dim5));
-    memset(dim5_tmp, 0, sizeof(struct Dim5));
+    memset(ptk_header, 0, sizeof(pcap_pkthdr));
+    memset(dim5, 0, sizeof(Dim5));
+    memset(dim5_tmp, 0, sizeof(Dim5));
     ++index;
 
     // read packet header 16 bytes
@@ -145,15 +147,19 @@ int main() {
 
     // 本函數將一個16位數由網絡字節順序轉換為主機字節順序。
     // 返回值：ntohs()返回一個以主機字節順序表達的數。
-    // ntohs: net to host short int 16位
+    // ntohs: net to host short int 16 bytes
     dim5->SrcPort = ntohs(dim5->SrcPort);
     dim5->DstPort = ntohs(dim5->DstPort);
+    // ntohl: net to host long int 32 bytes
+    dim5->SrcIP = ntohl(dim5->SrcIP);
+    dim5->DstIP = ntohl(dim5->DstIP);
 
-    fprintf(output, "%s     %s      %d     %d      %d\n", tempSrcIp, tempDstIp,
-            dim5->SrcPort, dim5->DstPort, dim5->Protocol);
+    fprintf(output, "%ld    %s     %s      %d     %d      %d\n", index,
+            tempSrcIp, tempDstIp, dim5->SrcPort, dim5->DstPort, dim5->Protocol);
 
-    fprintf(output, "%u     %u      %d     %d      %d\n\n", dim5->SrcIP,
-            dim5->DstIP, dim5->SrcPort, dim5->DstPort, dim5->Protocol);
+    fprintf(output, "%ld    %u     %u      %d     %d      %d\n\n", index,
+            dim5->SrcIP, dim5->DstIP, dim5->SrcPort, dim5->DstPort,
+            dim5->Protocol);
 
     // write dat (binary)
     fwrite(dim5, sizeof(Dim5), 1, outB);
@@ -161,11 +167,11 @@ int main() {
     // write dat test
     fseek(outB, -1 * sizeof(Dim5), SEEK_CUR);
     fread(dim5_tmp, sizeof(Dim5), 1, outB);
-    fprintf(output, "====== convert TEST ======\n");
-    fprintf(output, "%u     %u      %d     %d      %d\n",
+    fprintf(output, "======== convert TEST ========\n");
+    fprintf(output, "%ld    %u     %u      %d     %d      %d\n", index,
             (unsigned int)dim5_tmp->SrcIP, (unsigned int)dim5_tmp->DstIP,
             dim5_tmp->SrcPort, dim5_tmp->DstPort, dim5_tmp->Protocol);
-    fprintf(output, "====== TEST ======\n\n");
+    fprintf(output, "==============================\n\n\n");
     fseek(outB, sizeof(Dim5), SEEK_CUR);
   }
 
