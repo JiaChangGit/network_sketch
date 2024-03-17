@@ -80,9 +80,7 @@ int main() {
   dim5_tmp = (Dim5 *)malloc(sizeof(Dim5));
 
   // read file
-  // FILE *pFile = fopen(Pcap_path, "r");
-
-  // "CAIDA" no ethnet header, 要註解 fseek(pFile, 14, SEEK_CUR);
+  // "CAIDA" no ethnet header, Should Del "fseek(pFile, 14, SEEK_CUR);"
   FILE *pFile = fopen(Pcap_path, "r");
   if (pFile == NULL) {
     fprintf(stderr, "[ERROR] Can not open PCAP file!!\n");
@@ -186,7 +184,6 @@ int main() {
             (unsigned int)dim5_tmp->SrcIP, (unsigned int)dim5_tmp->DstIP,
             dim5_tmp->SrcPort, dim5_tmp->DstPort, dim5_tmp->Protocol);
     fprintf(output, "==============================\n\n\n");
-    fseek(outB, sizeof(Dim5), SEEK_CUR);
   }
 
   fclose(pFile);
