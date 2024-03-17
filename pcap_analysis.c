@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+// IO file path
+const char *Pcap_path = "./traces/trace1.pcap";
+const char *OutB_path = "./INFO/binary.dat";
+const char *Output_path = "./INFO/pcap_result.txt";
+
 // 儲存轉化后的ip地址。
 char tempSrcIp[256];
 char tempDstIp[256];
@@ -75,18 +80,20 @@ int main() {
   dim5_tmp = (Dim5 *)malloc(sizeof(Dim5));
 
   // read file
-  FILE *pFile = fopen("./traces/test.pcap", "r");
-  // FILE *pFile = fopen("./traces/trace1.pcap", "r");
+  // FILE *pFile = fopen(Pcap_path, "r");
+
+  // "CAIDA" no ethnet header, 要註解 fseek(pFile, 14, SEEK_CUR);
+  FILE *pFile = fopen(Pcap_path, "r");
   if (pFile == NULL) {
     fprintf(stderr, "[ERROR] Can not open PCAP file!!\n");
     exit(-1);
   }
-  FILE *output = fopen("./INFO/pcap_result.txt", "w+");
+  FILE *output = fopen(Output_path, "w+");
   if (output == NULL) {
     fprintf(stderr, "[ERROR] Can not write file!!\n");
     exit(-1);
   }
-  FILE *outB = fopen("./INFO/binary.dat", "w+");
+  FILE *outB = fopen(OutB_path, "w+");
   if (outB == NULL) {
     fprintf(stderr, "[ERROR] Can not write dat!!\n");
     exit(-1);
@@ -120,9 +127,10 @@ int main() {
 
     // 14 bytes: ethnet size = src mac (48 bits) + dst mac (48 bits) + type (16
     // bits)
-    fseek(pFile, 14, SEEK_CUR);
+    // CAIDA no this one
+    // fseek(pFile, 14, SEEK_CUR);
 
-    // IP header 20位元組
+    // IP header 20 bytes
     memset(ip_header, 0, sizeof(IPHeader_t));
     if (fread(ip_header, sizeof(IPHeader_t), 1, pFile) != 1) {
       fprintf(stderr, "index: %ld can not read ip_header\n", index);
